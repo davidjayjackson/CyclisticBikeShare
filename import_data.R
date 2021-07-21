@@ -8,8 +8,7 @@ library(lubridate)
 ## Data Source:
 ## https://divvy-tripdata.s3.amazonaws.com/index.html
 rm(list=ls())
-dir("Data",full.names = T)
-cbike <-dir("Data",full.names=T) %>% map_df(read_csv,skip=1)
+
 ##
 ## The Long Way ...
 ##
@@ -33,4 +32,28 @@ bike_rides <- janitor::remove_empty(bike_rides,which = c("cols"))
 bike_rides <- janitor::remove_empty(bike_rides,which = c("rows"))
 ## Convert Data/Time stamp to Date/Time ...
 
-bike()
+bike_rides$started_at <- lubridate::ymd_hms(bike_rides$started_at)
+bike_rides$ended_at <- lubridate::ymd_hms(bike_rides$ended_at)
+## parse time 
+bike_rides$start_time <- lubridate::hms(bike_rides$started_at)
+bike_rides$end_time <- lubridate::hms(bike_rides$ended_at)
+## Creat hour field
+bike_rides$start_hour <- lubridate::hour(bike_rides$started_at)
+bike_rides$end_hour <- lubridate::hour(bike_rides$ended_at)
+
+bike_rides$start_date <- as.Date(bike_rides$started_at)
+bike_rides$end_date <- as.Date(bike_rides$ended_at)
+##
+## Calculate trop duration
+##
+# bike_rides$trip_duration <- bike_rides$ended_at - bike_rides$started_at + 1
+# bike_rides$trip_duration <-difftime(bike_rides$started_at,bike_rides$ended_at)
+##
+## Export Data
+
+# write.csv(bike_rides,file="bikerides.csv",row.names = FALSE)
+
+## Importing CSV files.
+
+dir("Data",full.names = T)
+files.list
