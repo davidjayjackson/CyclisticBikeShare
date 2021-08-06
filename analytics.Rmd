@@ -57,24 +57,22 @@ bike_rides$Hours <- difftime(bike_rides$ended_at,bike_rides$started_at,units = c
 bike_rides$Minutes <- difftime(bike_rides$ended_at,bike_rides$started_at,units = c("mins"))
 
 
-df <- bike_rides %>% filter(Hours >0)
+df <- bike_rides %>% filter(Hours >0) %>% drop_na() %>%
+  select(-ride_id,-end_station_name,-end_station_id,
+        -end_station_name )
 ```
 
-```{r}
-# df <- df %>% select(Ymd,started_at,ended_at,start_station_name,
-#               member_casual, rideable_type,Hours,Minutes) 
+## Data Wrangling Change Log
 
-```
+August 6, 2021:
 
+* Total Rows: 3,489,749
+* I raised the following three concerns (about the data) with Lily Moreno(The director of marketing): 
+(1) 10,552 rows  with negative trip durations,
+(2) 122,175 rows with missing Starting Station names (and ID),(3) As many as 1,291 stations  with two different start_staition_id.
 
-
-
-
-
-
-
-
-
-
-## R Markdown
+* I was advised by Lily Moreno that we could ignore rows with trip duraton <=0.
+We could also ignore rows with missing start_station_name, and also ignore stations_id. 
+* And should focus on doing using the start_station_name to prefrom aggregate functions on date, start_station_name, member_casual and rideable_type.
+* Cleaning reducted rows to 3,343,689
 

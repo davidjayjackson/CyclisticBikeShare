@@ -1,0 +1,76 @@
+---
+title: "Bike Share Analysis"
+author: "David Jackson"
+date: "7/27/2021"
+output: 
+  html_document: 
+    fig_width: 9
+    fig_height: 6
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RSQLite)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+library(lubridate)
+```
+```{r}
+rm(list=ls())
+db <- dbConnect(SQLite(), dbname="../Cyclistic-bike-share-analysis/bikeshare.sqlite3")
+
+```
+
+## R Markdown
+
+
+```{r cars}
+bikes <- dbGetQuery(db,"SELECT * FROM test;")
+```
+```{r}
+bikes$started_at <- ymd_hms(bikes$started_at)
+bikes$ended_at <- ymd_hms(bikes$ended_at)
+bikes$StatDate <- as.Date(bikes$started_at)
+bikes$EndDate <- as.Date(bikes$ended_at)
+
+```
+
+## Top Ten (10) Start Stations
+
+```{r}
+bikes %>% count(start_station_name,SORT = TRUE) %>% top_n(10) %>%
+  ggplot() + geom_col(aes(x=reorder(start_station_name,n),y=n)) + coord_flip()
+```
+
+# Bike Trips Per Day
+
+```{r}
+bikes %>% count(StatDate,sort = TRUE) %>%
+  ggplot() + geom_line(aes(x=StatDate,n)) +
+  geom_smooth(aes(x=StatDate,y=n),method = "gam")
+```
+```{r}
+bikes %>% count(StatDate,rideable_type,sort = TRUE) %>%
+  ggplot() + geom_line(aes(x=StatDate,n,col=rideable_type)) 
+  
+
+bikes %>% count(StatDate,rideable_type,sort = TRUE) %>%
+  ggplot() + geom_smooth(aes(x=StatDate,n,col=rideable_type),method = "gam")
+```
+
+```{r}
+bikes %>% count(StatDate,member_casual,sort = TRUE) %>%
+  ggplot() + geom_smooth(aes(x=StatDate,n,col=member_casual))
+```
+
+## Ride minutes by Day
+
+```{r}
+bikes %>% filter(duration >0) %>% group_by(StatDate) %>% summarise(
+                   Total = sum(duration)) %>%
+                     ggplot() + geom_col(aes(x=StatDate,y=Total))
+
+```
+
