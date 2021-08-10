@@ -3,17 +3,10 @@ library(janitor)
 library(lubridate)
 library(readxl)
 library(writexl) # Well, This is used to create Excel Sheets
-# library(RSQLite)
 rm(list=ls())
 ## Get Directory Listing
 ## R  Code Video:
 ##  https://youtu.be/HpWce0ovphY
-##
-## Data Source:
-## https://divvy-tripdata.s3.amazonaws.com/index.html
-# db <- dbConnect(SQLite(), dbname="../Google-Data-Analylitcs-Cert/cyclistic.sqlite3")
-
-
 ##
 ## The Long Way ...
 ##
