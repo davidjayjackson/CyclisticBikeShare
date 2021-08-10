@@ -1,15 +1,18 @@
 library(tidyverse)
 library(janitor)
 library(lubridate)
-library(RSQLite)
+library(readxl)
+library(writexl) # Well, This is used to create Excel Sheets
+# library(RSQLite)
+rm(list=ls())
 ## Get Directory Listing
 ## R  Code Video:
 ##  https://youtu.be/HpWce0ovphY
 ##
 ## Data Source:
 ## https://divvy-tripdata.s3.amazonaws.com/index.html
-db <- dbConnect(SQLite(), dbname="../Google-Data-Analylitcs-Cert/cyclistic.sqlite3")
-rm(list=ls())
+# db <- dbConnect(SQLite(), dbname="../Google-Data-Analylitcs-Cert/cyclistic.sqlite3")
+
 
 ##
 ## The Long Way ...
@@ -35,37 +38,36 @@ bike_rides <- janitor::remove_empty(bike_rides,which = c("rows"))
 ##
 ## Convert Data/Time stamp to Date/Time ...
 ##
+bike_rides$Ymd <- as.Date(bike_rides$started_at)
 bike_rides$started_at <- lubridate::ymd_hms(bike_rides$started_at)
 bike_rides$ended_at <- lubridate::ymd_hms(bike_rides$ended_at)
 
 bike_rides$start_hour <- lubridate::hour(bike_rides$started_at)
 bike_rides$end_hour <- lubridate::hour(bike_rides$ended_at)
 
-##
-## Calculate trip duration
-## Shoutout to Indrek Seppo on the Facebook R Statistical Software Group
-bike_rides$trip_duration<- bike_rides$ended_at %--% bike_rides$started_at/minutes(1)
+### Calculate Trip Duration
 
-## Export
+bike_rides$Hours <- difftime(bike_rides$ended_at,bike_rides$started_at,units = c("hours"))
 
-# write.csv(bike_rides,file="bikerides.csv",row.names = FALSE)
+bike_rides$Minutes <- difftime(bike_rides$ended_at,bike_rides$started_at,units = c("mins"))
 
-## 
-## Connect to Ms SQL Server 2019
+bikerides1 <- bike_rides %>% filter(Minutes >0) %>% drop_na()
 
-### SQL statement  to fix  negative drip duration
-
-# Select case when datediff(minute, started_at, ended_at) < 0 
-# then 0 
-# else datediff(minute, started_at, ended_at) 
-# end
+ 
 
 
-### Loas SQLite database
-dbWriteTable(db, "bikerides",bike_rides ,overwrite=TRUE)
-dbListFields(con,"google")
-# 
-dbListTables(con)
+
+### Create summary data frame
+
+bikesrides2 <- bikerides1 %>% group_by(Ymd,start_hour) %>%
+                summarise(
+                  Minutes = sum(Minutes),
+                  Mean = mean(Minutes),
+                  Median = median(Minutes),
+                  Max = max(Minutes),
+                  Min = min(Minutes),
+                  Count = n()
+                ) %>% ungroup()
 
 
-df <- dbGetQuery(db,"select * from bikerides")
+write_xlsx(bikesrides2,"./bikerides2.xlsx")
