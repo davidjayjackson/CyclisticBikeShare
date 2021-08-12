@@ -3,7 +3,7 @@ title: 'Cyclistic Bike Share: Analytics'
 author: "David Jackson"
 date: "`r Sys.time()`"
 output: 
-  html_document: 
+  pdf_document: 
     fig_width: 9
     fig_height: 6
 ---
