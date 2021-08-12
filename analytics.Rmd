@@ -82,7 +82,7 @@ bike_rides <- bike_rides %>% filter(Minutes >0)
 ```{r}
 ### Create summary data frame
 
-bikesrides2 <- bike_rides %>% group_by(Ymd,start_hour) %>%
+bikesrides2 <- bike_rides %>% group_by(Weekly = floor_date(Ymd,"week"),start_hour) %>%
                 summarise(
                   Minutes = sum(Minutes),
                   Mean = mean(Minutes),
@@ -116,12 +116,12 @@ xtabs(bikesrides2$Count~bikesrides2$start_hour)
 
 
 ```{r}
-bikesrides2 %>% ggplot() + geom_line(aes(x=Ymd,y=CntMA)) +
+bikesrides2 %>% ggplot() + geom_col(aes(x=Weekly,y=Count)) +
   scale_y_continuous(labels = comma) +
   labs(title = "Count of Rides per Day",
        subtitle = "(Bases on 28 day moving average",
-       y="Average rides per day") +
-      geom_smooth(aes(x=Ymd,y=CntMA),method = "gam")
+       y="Average rides per day") 
+      
 ```
 ```{r}
 bikesrides2 %>% ggplot() + geom_col(aes(x=start_hour,y=Count)) +
@@ -138,7 +138,7 @@ bikesrides2 %>% ggplot() + geom_col(aes(x=start_hour,y=Count)) +
 
 
 ```{r}
-bikestype <- bike_rides %>% group_by(rideable_type,Ymd) %>%
+bikestype <- bike_rides %>% group_by(rideable_type,Weekly = floor_date(Ymd,"week")) %>%
                 summarise(
                   Minutes = sum(Minutes),
                   Mean = mean(Minutes),
@@ -149,7 +149,7 @@ bikestype <- bike_rides %>% group_by(rideable_type,Ymd) %>%
                 ) %>% ungroup()
 ```
 
-* Count by Bike Type
+* Count by Bike Type(Total by Week)
 
 ```{r}
 table(bikestype$rideable_type)
@@ -157,7 +157,34 @@ table(bikestype$rideable_type)
 
 
 ```{r}
-ggplot(bikestype) + geom_line(aes(x=Ymd,y=Count)) +
+ggplot(bikestype) + geom_area(aes(x=Weekly,y=Count,fill=rideable_type)) +
   facet_wrap(~rideable_type,scale="free_y")
 ```
+
+```{r}
+ # bikes_type_wbikestype %>% group_by(Weekly = floor_date(Ymd,"week"),rideable_type) %>%     summarise(Total = sum(Count)) 
+```
+
+```{r}
+ggplot(bikestype) + geom_col(aes(x=Weekly,y=Minutes)) +
+  scale_y_continuous(labels = comma) + facet_wrap(~rideable_type) +
+  labs(title="Total Ride Minutes by Week")
+```
+```{r}
+ggplot(bikestype,aes(x=Weekly,y=Minutes,fill=rideable_type)) + 
+  geom_area(stat = "identity", position = position_dodge(), alpha = 0.75) +
+  scale_y_continuous(labels = comma) + 
+  labs(title = "Rides Minutes by Bike Type and Week",
+       y="Bike Trip In Minutes")
+```
+
+## Begin Analysis Of Minutes of Ride Time
+
+```{r}
+
+ggplot(bikesrides2) + geom_col(aes(x=Weekly,y=Mean)) +
+  labs(title="Average Trip Minutes by Week", y ="Average Ride Time(minutes)") +
+  scale_y_continuous(labels = comma)
+```
+
 
