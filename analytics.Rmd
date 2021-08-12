@@ -2,7 +2,10 @@
 title: 'Cyclistic Bike Share: Analytics'
 author: "David Jackson"
 date: "8/4/2021"
-output: html_document
+output: 
+  html_document: 
+    fig_width: 9
+    fig_height: 6
 ---
 
 ```{r setup, include=FALSE}
@@ -10,8 +13,25 @@ knitr::opts_chunk$set(echo = FALSE,message = FALSE,error = FALSE)
 library(tidyverse)
 library(janitor)
 library(lubridate)
+library(scales)
 rm(list=ls())
 ```
+
+
+## Data Wrangling Change Log
+
+August 6, 2021:
+
+* Total Rows: 3,489,749
+* I raised the following three concerns (about the data) with Lily Moreno(The director of marketing): 
+(1) 10,552 rows  with negative trip durations,
+(2) 122,175 rows with missing Starting Station names (and ID),(3) As many as 1,291 stations  with two different start_staition_id.
+
+* I was advised by Lily Moreno that we could ignore rows with trip duraton <=0.
+We could also ignore rows with missing start_station_name, and also ignore stations_id. 
+* And should focus on doing using the start_station_name to prefrom aggregate functions on date, start_station_name, member_casual and rideable_type.
+* Cleaning reducted rows to 3,343,689
+
 ```{r}
 ##
 ## Import previous 12 months data
@@ -36,8 +56,8 @@ df12 <- read.csv("./Data/t12.csv")
 bike_rides <- rbind(df1,df2,df3,df4,df5,df6,df7,df8,df9,df10,df11,df12)
 bike_rides <- janitor ::remove_empty(bike_rides,which = c("cols"))
 bike_rides <- janitor::remove_empty(bike_rides,which = c("rows"))
-
-```
+bike_rides <- bike_rides  %>% filter(start_station_name !="")
+``` 
 ```{r}
 ##
 ## Convert Data/Time stamp to Date/Time ...
@@ -56,23 +76,61 @@ bike_rides$Hours <- difftime(bike_rides$ended_at,bike_rides$started_at,units = c
 
 bike_rides$Minutes <- difftime(bike_rides$ended_at,bike_rides$started_at,units = c("mins"))
 
+bike_rides <- bike_rides %>% filter(Minutes >0)
 
-df <- bike_rides %>% filter(Hours >0) %>% drop_na() %>%
-  select(-ride_id,-end_station_name,-end_station_id,
-        -end_station_name )
+```
+```{r}
+### Create summary data frame
+
+bikesrides2 <- bike_rides %>% group_by(Ymd,start_hour) %>%
+                summarise(
+                  Minutes = sum(Minutes),
+                  Mean = mean(Minutes),
+                  Median = median(Minutes),
+                  Max = max(Minutes),
+                  Min = min(Minutes),
+                  Count = n()
+                ) %>% ungroup()
+```
+```{r}
+bikesrides2$CntMA <- forecast::ma(bikesrides2$Count,28)
 ```
 
-## Data Wrangling Change Log
 
-August 6, 2021:
+## Plot of Rides By Date
 
-* Total Rows: 3,489,749
-* I raised the following three concerns (about the data) with Lily Moreno(The director of marketing): 
-(1) 10,552 rows  with negative trip durations,
-(2) 122,175 rows with missing Starting Station names (and ID),(3) As many as 1,291 stations  with two different start_staition_id.
 
-* I was advised by Lily Moreno that we could ignore rows with trip duraton <=0.
-We could also ignore rows with missing start_station_name, and also ignore stations_id. 
-* And should focus on doing using the start_station_name to prefrom aggregate functions on date, start_station_name, member_casual and rideable_type.
-* Cleaning reducted rows to 3,343,689
+```{r}
+bikesrides2 %>% ggplot() + geom_line(aes(x=Ymd,y=CntMA)) +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Count of Rides per Day",
+       subtitle = "(Bases on 28 day moving average",
+       y="Average rides per day") +
+      geom_smooth(aes(x=Ymd,y=CntMA),method = "gam")
+```
+```{r}
+bikesrides2 %>% ggplot() + geom_col(aes(x=start_hour,y=Count)) +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Count of Rides by Hours",
+        y="Rides per Hour") 
+      
+```
+
+### Count of Rides by Bike Type
+
+```{r}
+bikestype <- bike_rides %>% group_by(rideable_type,Ymd) %>%
+                summarise(
+                  Minutes = sum(Minutes),
+                  Mean = mean(Minutes),
+                  Median = median(Minutes),
+                  Max = max(Minutes),
+                  Min = min(Minutes),
+                  Count = n()
+                ) %>% ungroup()
+```
+```{r}
+ggplot(bikestype) + geom_line(aes(x=Ymd,y=Count)) +
+  facet_wrap(~rideable_type,scale="free_y")
+```
 
