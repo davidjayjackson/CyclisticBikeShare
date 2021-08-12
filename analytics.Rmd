@@ -1,14 +1,14 @@
 ---
 title: 'Cyclistic Bike Share: Analytics'
 author: "David Jackson"
-date: "8/4/2021"
+date: "`r Sys.time()`"
 output: 
   html_document: 
     fig_width: 9
     fig_height: 6
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE,echo=FALSE,error=FALSE,message=FALSE}
 knitr::opts_chunk$set(echo = FALSE,message = FALSE,error = FALSE)
 library(tidyverse)
 library(janitor)
@@ -98,6 +98,21 @@ bikesrides2$CntMA <- forecast::ma(bikesrides2$Count,28)
 
 
 ## Plot of Rides By Date
+#### Summary Stats: Counts
+
+ * Summary of Hourly Counts
+
+```{r}
+# Summary of Hourly Counts
+summary(bikesrides2$Count)
+```
+ 
+ * Count of rides by Hour
+
+```{r}
+# Table of Counts by Hour
+xtabs(bikesrides2$Count~bikesrides2$start_hour)
+```
 
 
 ```{r}
@@ -116,7 +131,11 @@ bikesrides2 %>% ggplot() + geom_col(aes(x=start_hour,y=Count)) +
       
 ```
 
-### Count of Rides by Bike Type
+## Count of Rides by Bike Type
+#### Summary of Bike Types
+
+
+
 
 ```{r}
 bikestype <- bike_rides %>% group_by(rideable_type,Ymd) %>%
@@ -129,6 +148,14 @@ bikestype <- bike_rides %>% group_by(rideable_type,Ymd) %>%
                   Count = n()
                 ) %>% ungroup()
 ```
+
+* Count by Bike Type
+
+```{r}
+table(bikestype$rideable_type)
+```
+
+
 ```{r}
 ggplot(bikestype) + geom_line(aes(x=Ymd,y=Count)) +
   facet_wrap(~rideable_type,scale="free_y")
