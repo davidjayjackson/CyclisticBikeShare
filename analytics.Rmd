@@ -18,7 +18,10 @@ rm(list=ls())
 ```
 
 
+
 ## Data Wrangling Change Log
+
+* Date Range: 2020-04-01 to 2021--3-31
 
 August 6, 2021:
 
@@ -29,7 +32,7 @@ August 6, 2021:
 
 * I was advised by Lily Moreno that we could ignore rows with trip duraton <=0.
 We could also ignore rows with missing start_station_name, and also ignore stations_id. 
-* And should focus on doing using the start_station_name to prefrom aggregate functions on date, start_station_name, member_casual and rideable_type.
+* And should focus on doing using the start_station_name to preform aggregate functions on date, start_station_name, member_casual and rideable_type.
 * Cleaning reducted rows to 3,343,689
 
 ```{r}
@@ -116,11 +119,13 @@ xtabs(bikesrides2$Count~bikesrides2$start_hour)
 
 
 ```{r}
+bikesrides2$Monthly <- lubridate::month(bikesrides2$Weekly)
+
 bikesrides2 %>% ggplot() + geom_col(aes(x=Weekly,y=Count)) +
   scale_y_continuous(labels = comma) +
   labs(title = "Count of Rides per Day",
        subtitle = "(Bases on 28 day moving average",
-       y="Average rides per day") 
+       y="Average rides per day")  
       
 ```
 ```{r}
@@ -134,11 +139,8 @@ bikesrides2 %>% ggplot() + geom_col(aes(x=start_hour,y=Count)) +
 ## Count of Rides by Bike Type
 #### Summary of Bike Types
 
-
-
-
 ```{r}
-bikestype <- bike_rides %>% group_by(rideable_type,Weekly = floor_date(Ymd,"week")) %>%
+bikestype <- bike_rides %>% group_by(member_casual,rideable_type,Weekly = floor_date(Ymd,"week")) %>%
                 summarise(
                   Minutes = sum(Minutes),
                   Mean = mean(Minutes),
@@ -152,17 +154,32 @@ bikestype <- bike_rides %>% group_by(rideable_type,Weekly = floor_date(Ymd,"week
 * Count by Bike Type(Total by Week)
 
 ```{r}
-table(bikestype$rideable_type)
+ggplot(bikestype) + geom_area(aes(x=Weekly,y=Count,col=rideable_type)) +
+  scale_y_continuous(labels = comma) +
+  labs(title="Count of Rides by Bike Type")
+  
+ 
+```
+
+```{r}
+bike_rides %>% count(start_station_name,sort = TRUE) %>%
+  top_n(20) %>% ggplot() + geom_col(aes(x=reorder(start_station_name,n),y=n)) +
+  coord_flip() + labs(title = "Top 20 Start Stations by Ride Count",
+                      y = "Station Name",x="Count of Rides") +
+  scale_y_continuous(labels = comma)
 ```
 
 
 ```{r}
-ggplot(bikestype) + geom_area(aes(x=Weekly,y=Count,fill=rideable_type)) +
-  facet_wrap(~rideable_type,scale="free_y")
+ggplot(bikestype) + geom_col(aes(x=Weekly,y=Count,fill=member_casual)) +
+  scale_y_continuous(labels = comma) +
+  labs(title="Count of Rides by Rider Type")
+  
+ 
 ```
 
 ```{r}
- # bikes_type_wbikestype %>% group_by(Weekly = floor_date(Ymd,"week"),rideable_type) %>%     summarise(Total = sum(Count)) 
+
 ```
 
 ```{r}
